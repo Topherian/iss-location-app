@@ -1,0 +1,35 @@
+name: Release workflow
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: docker-maven-ghactions-release
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Configure git
+        run: |
+          git config --global committer.email "noreply@github.com"
+          git config --global committer.name "GitHub"
+          git config --global author.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git config --global author.name "${GITHUB_ACTOR}"
+      - name: Checkout master branch
+        run: git checkout main
+      - name: Prepare release
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+        run: mvn --batch-mode release:prepare -Dusername=$GITHUB_ACTOR -Dpassword=$GITHUB_TOKEN
+      - name: Perform release
+        env:
+          DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: mvn --batch-mode release:perform

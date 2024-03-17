@@ -1,0 +1,17 @@
+logging:
+  level:
+    root: INFO
+    com:
+      topherian:
+        quantrics:
+          iss:
+            external:
+              services: DEBUG
+
+iss:
+  location:
+    endpoint: http://api.open-notify.org
+  country-iso:
+    endpoint: http://api.worldbank.org
+  wiki-action:
+    endpoint: https://en.wikipedia.org
