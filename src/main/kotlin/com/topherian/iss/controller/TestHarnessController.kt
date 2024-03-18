@@ -24,10 +24,8 @@ class TestHarnessController(
         return issLocationClient.getIssLocation()
     }
 
-    @GetMapping("/places/")
-    fun getPlaces(): WikiPageGeoSearchResults {
-        val latitude = "14.599916"
-        val longitude = "120.984337"
+    @GetMapping("/places/latitude/{lat}/longitude/{long}")
+    fun getPlaces(@PathVariable("lat") latitude: String, @PathVariable("long") longitude: String): WikiPageGeoSearchResults {
         val coordinates = "${latitude}|${longitude}"
         return wikiGeoSearchClient.searchPageByCoordinates(gscoord = coordinates)
 

@@ -1,5 +1,7 @@
 package com.topherian.iss.external.feign
 
+import io.kotest.matchers.equals.shouldBeEqual
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldNotBe
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -17,5 +19,31 @@ class CountryIsoClientTest(@Autowired val countryIsoClient: CountryIsoClient) {
         val response = countryIsoClient.getCountryCode("PH")
 
         response shouldNotBe null
+    }
+
+    @Test
+    fun `when an empty ISO code given, return a valid response`() {
+
+        val responseBody = countryIsoClient.getCountryCode("")
+
+        if (responseBody.size == 2) {
+            val responseBodyItem = responseBody[1] as ArrayList<*>
+            //returns more than 1 country if empty or null is specified
+            responseBodyItem.size shouldBeGreaterThan 0
+        }
+        responseBody shouldNotBe null
+    }
+
+    @Test
+    fun `when a null ISO code given, return a valid response`() {
+
+        val responseBody = countryIsoClient.getCountryCode(null)
+
+        if (responseBody.size == 2) {
+            val responseBodyItem = responseBody[1] as ArrayList<*>
+            //returns more than 1 country if empty or null is specified
+            responseBodyItem.size shouldBeGreaterThan 0
+        }
+        responseBody shouldNotBe null
     }
 }

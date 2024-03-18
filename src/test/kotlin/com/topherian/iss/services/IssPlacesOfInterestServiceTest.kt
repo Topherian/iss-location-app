@@ -8,6 +8,7 @@ import com.topherian.iss.external.models.wiki.WikiPageGeoSearchResults
 import io.kotest.matchers.equals.shouldBeEqual
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -26,6 +27,7 @@ class IssPlacesOfInterestServiceTest {
         val locationMock = mockk<Location>()
         every { locationMock.iss_position.latitude } returns "lat1"
         every { locationMock.iss_position.longitude } returns "long1"
+        every { locationMock.timestamp } returns 123
         every { issLocationClientMock.getIssLocation() } returns locationMock
 
 
@@ -43,12 +45,16 @@ class IssPlacesOfInterestServiceTest {
             countryIsoResolverService = countryIsoResolverServiceMock
         )
 
-        val results = issPlacesOfInterestService.findPlacesOfInterest()
+        val actualResults = issPlacesOfInterestService.findPlacesOfInterest()
 
         verify(exactly = 1) { issLocationClientMock.getIssLocation() }
         verify(atLeast = 1) { wikiResults.query.geosearch }
 
-        results.results shouldBe emptyList()
+        actualResults.results shouldBe emptyList()
+        actualResults.issCurrentLocation.latitude shouldBeEqual "lat1"
+        actualResults.issCurrentLocation.longitude shouldBeEqual "long1"
+        actualResults.issCurrentLocation.asOfTimeStamp shouldBeEqual 123
+        actualResults.status shouldContain "success - found 0 places of interest"
     }
 
     @Test
@@ -58,6 +64,7 @@ class IssPlacesOfInterestServiceTest {
         val locationMock = mockk<Location>()
         every { locationMock.iss_position.latitude } returns "lat1"
         every { locationMock.iss_position.longitude } returns "long1"
+        every { locationMock.timestamp } returns 123
         every { issLocationClientMock.getIssLocation() } returns locationMock
 
         val wikiResults = mapper.readValue(getGeoSearchResults(), WikiPageGeoSearchResults::class.java)
@@ -84,12 +91,16 @@ class IssPlacesOfInterestServiceTest {
         actualResults.results.size shouldBeEqual 10
         actualResults.results.find { it.country.isNotEmpty() }?.country shouldBe "Philippines"
 
-        val expectedResult = wikiResults.query.geosearch.filter { it.title == "Quiapo Church" }.first()
+        val expectedResult = wikiResults.query.geosearch.first { it.title == "Quiapo Church" }
 
         //validate mapped correctly
         actualResults.results.filter { it.title == expectedResult.title }.size shouldBe 1
         actualResults.results.filter { it.latitude == expectedResult.lat }.size shouldBe 1
         actualResults.results.filter { it.longitude == expectedResult.lon }.size shouldBe 1
+        actualResults.status shouldContain "found 10 places of interest"
+        actualResults.issCurrentLocation.latitude shouldBeEqual "lat1"
+        actualResults.issCurrentLocation.longitude shouldBeEqual "long1"
+        actualResults.issCurrentLocation.asOfTimeStamp shouldBeEqual 123
 
     }
 

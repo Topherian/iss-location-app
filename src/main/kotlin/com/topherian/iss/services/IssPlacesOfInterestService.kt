@@ -2,6 +2,9 @@ package com.topherian.iss.services
 
 import com.topherian.iss.external.feign.IssLocationClient
 import com.topherian.iss.external.feign.WikiGeoSearchClient
+import com.topherian.iss.external.models.iss.IssPosition
+import com.topherian.iss.external.models.iss.Location
+import com.topherian.iss.models.IssLocation
 import com.topherian.iss.models.Result
 import com.topherian.iss.models.Results
 import org.slf4j.LoggerFactory.getLogger
@@ -14,30 +17,48 @@ class IssPlacesOfInterestService(
     private val countryIsoResolverService: CountryIsoResolverService
 ) {
 
-    fun findPlacesOfInterest(): Results {
+    fun findPlacesOfInterestOverride(latitude: String, longitude: String): Results {
+        val issPositionOverride = IssPosition(latitude, longitude)
+        val location = Location (issPositionOverride, "override", 0)
+        return findPlacesOfInterestByLocation(location)
+    }
 
+    fun findPlacesOfInterest() : Results {
         val location = issLocationClient.getIssLocation()
-        logger.debug("Current ISS location: {}", location)
+        return findPlacesOfInterestByLocation(location)
+    }
+    private fun findPlacesOfInterestByLocation(location: Location): Results {
+
+        logger.debug("Current specified ISS location: {}", location)
         val coordinates = "${location.iss_position.latitude}|${location.iss_position.longitude}"
         val results = wikiGeoSearchClient.searchPageByCoordinates(gscoord = coordinates)
         logger.debug("Result count given location: {}", results.query.geosearch.size)
-        if (results.query.geosearch.isNotEmpty()) {
-            val resolveCountry = results.query.geosearch.find { it.country?.isNotEmpty() == true }?.country
+        val resultsList = results.query.geosearch.map {
+            val resolveCountry = it.country
             logger.debug("Resolved ISO Country code: {}", resolveCountry)
-            //assumption: the result set will all return from the same country
-            val countryName = countryIsoResolverService.resolveCountryIso(resolveCountry)
-            val resultsList = results.query.geosearch.map {
-                Result(
-                    country = countryName,
-                    latitude = it.lat,
-                    longitude = it.lon,
-                    title = it.title
-                )
-            }.toList()
-            return Results(resultsList)
-        }
-        return Results(results = emptyList())
+            val countryName = countryIsoResolverService.resolveCountryIso(it.country)
+            Result(
+                country = countryName,
+                latitude = it.lat,
+                longitude = it.lon,
+                title = it.title
+            )
+        }.toList()
+        val status = String.format("success - found ${resultsList.size} places of interest")
+        logger.info(status)
+        return resultsMapper(location, resultsList, status)
+    }
 
+    private fun resultsMapper(issCurrentLocation: Location, results: List<Result>, status: String): Results {
+        return Results(
+            issCurrentLocation = IssLocation
+                (
+                issCurrentLocation.iss_position.latitude,
+                issCurrentLocation.iss_position.longitude,
+                issCurrentLocation.timestamp
+            ),
+            results = results, status = status
+        )
     }
 
     companion object {
