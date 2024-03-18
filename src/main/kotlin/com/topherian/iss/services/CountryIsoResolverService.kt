@@ -4,6 +4,7 @@ import com.topherian.iss.external.feign.CountryIsoClient
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.rmi.UnexpectedException
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class CountryIsoResolverService(private val countryIsoClient: CountryIsoClient) {
@@ -18,13 +19,14 @@ class CountryIsoResolverService(private val countryIsoClient: CountryIsoClient) 
             if (responseBodyItem.size == 1) {
                 val linkedHashMap = responseBodyItem[0] as LinkedHashMap<*, *>
                 if (linkedHashMap.containsKey("name")) {
-                    return linkedHashMap["name"].toString()
+                    return linkedHashMap["name"] as String
                 } else {
-                    logger.warn("Payload valid, but name key not found in the payload.  Returning empty string")
-                    return ""
+                    logger.warn("Payload valid, but name key not found in the payload.  Returning empty string.")
+                    return "UNKNOWN"
                 }
             } else {
-                throw UnexpectedException("Payload is not valid or unrecognized.")
+                logger.warn("Country could not be resolved.  Returning UNKNOWN string.")
+                return "UNKNOWN"
             }
         } else {
             throw UnexpectedException("Payload is not valid or unrecognized")

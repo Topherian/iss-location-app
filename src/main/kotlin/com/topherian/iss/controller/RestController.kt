@@ -5,6 +5,7 @@ import com.topherian.iss.services.IssPlacesOfInterestService
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
@@ -15,6 +16,18 @@ class RestController(private val issPlacesOfInterestService: IssPlacesOfInterest
     fun getIssLocationPlacesOfInterest(): Results {
         try {
             return issPlacesOfInterestService.findPlacesOfInterest()
+        } catch (ex: Exception) {
+            logger.error("An exception has occurred", ex)
+            throw ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, "An exception has occurred with the service", ex
+            )
+        }
+    }
+
+    @GetMapping("/iss-location/places-of-interest/override/latitude/{lat}/longitude/{long}")
+    fun getIssLocationPlacesOfInterestOverride(@PathVariable("lat") lat: String, @PathVariable("long") long: String): Results {
+        try {
+            return issPlacesOfInterestService.findPlacesOfInterestOverride(lat, long)
         } catch (ex: Exception) {
             logger.error("An exception has occurred", ex)
             throw ResponseStatusException(

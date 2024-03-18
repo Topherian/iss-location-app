@@ -59,16 +59,15 @@ class CountryIsoResolverServiceTest {
 
         every { countryIsoClient.getCountryCode(any()) } returns worldBankResults
         val countryIsoService = CountryIsoResolverService(countryIsoClient = countryIsoClient)
+        val countryName = countryIsoService.resolveCountryIso("PH")
 
-        val exception = shouldThrow<UnexpectedException> {
-            countryIsoService.resolveCountryIso("PH")
-        }
         verify(exactly = 1) { countryIsoClient.getCountryCode(any()) }
-        exception.message shouldContain "Payload is not valid or unrecognized"
+        countryName shouldBeEqual "UNKNOWN"
+
     }
 
     @Test
-    fun `when a valid ISO country code is passed in, and an invalid payload without a country name section is returned then an empty string is returned`() {
+    fun `when a valid ISO country code is passed in, and an invalid payload without a country name section is returned then an UNKNOWN string is returned`() {
 
         val countryIsoClient = mockk<CountryIsoClient>()
         // read an actual object given the complexity of the domain object
@@ -79,7 +78,7 @@ class CountryIsoResolverServiceTest {
         val countryName = countryIsoService.resolveCountryIso("PH")
 
         verify(exactly = 1) { countryIsoClient.getCountryCode(any()) }
-        countryName shouldBeEqual ""
+        countryName shouldBeEqual "UNKNOWN"
     }
 
     fun getValidResults() = """[
