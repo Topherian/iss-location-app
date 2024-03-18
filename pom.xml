@@ -9,12 +9,12 @@
     </parent>
     <groupId>topherian</groupId>
     <artifactId>iss-location-app</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.3</version>
     <name>iss-location-app</name>
     <description>ISS Take Home task</description>
     <scm>
         <developerConnection>scm:git:https://github.com/${project.groupId}/${project.artifactId}</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.3</tag>
     </scm>
     <properties>
         <java.version>17</java.version>
